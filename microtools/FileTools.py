@@ -29,6 +29,8 @@ def getDirContentsRec(dir, pattern=None):
     returns dir content, including subdirectories
     :param dir:
     :type dir: str
+    :param pattern: glob style pattern to filter files
+    :type pattern: str
     :return: returns list of files
     :rtype: list[str]
     """
