@@ -45,3 +45,4 @@ def getDirContentsRec(dir, pattern=None):
                 result.append(fullPath)
     return result
 
+
