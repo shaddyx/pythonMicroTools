@@ -16,6 +16,10 @@ class Process(object):
             return None
         return line
 
+    def kill(self):
+        self.pipe.kill()
+
+
 
 class ProcessResult(object):
     stdout = []
@@ -36,6 +40,7 @@ def execute(process, wait=True):
 
     :type process: list[str] | str
     :type wait: bool
+    :param wait: if true - returns ProcessResult with stout/stderror values, otherwise returns Process
     :return:
     :rtype: ProcessResult|Process
     """
