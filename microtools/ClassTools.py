@@ -8,3 +8,4 @@ def getVars(obj):
     for k in dir(obj):
         dic[k]=getattr(obj, k)
     return dic
+
