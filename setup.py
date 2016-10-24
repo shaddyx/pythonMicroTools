@@ -2,7 +2,7 @@ from distutils.core import setup
 setup(
   name = 'microTools',
   packages = ['microtools'],
-  version = '0.4',
+  version = '0.41',
   description = 'a collection of simple common functions',
   author = 'Anatolii Yakushko',
   author_email = 'shaddyx@gmail.com',
