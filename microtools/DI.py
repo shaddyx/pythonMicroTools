@@ -19,7 +19,6 @@ class Scope(object):
         finally:
             self.scopeLock.release()
 
-
     def registerService(self, name, service):
         name = self.__getName(name)
         self.scopeLock.acquire()
@@ -63,6 +62,20 @@ class Locator(object):
     @staticmethod
     def getInstance(service):
         return Locator.scope.getInstance(service)
+
+def InjectClass(*args, **kwargs_):
+    def decorator(cls):
+        #if not hasattr(cls, "__injector_classes_to_inject"):
+        #    cls.__injector_classes_to_inject = []
+        old = None
+        def injectedConstructor(*args, **kwargs):
+            for name in kwargs_:
+                setattr(args[0], name, Locator.getInstance(kwargs_[name]))
+            return old(*args, **kwargs)
+        old = cls.__init__
+        cls.__init__ = injectedConstructor
+        return cls
+    return decorator
 
 def Inject(**kwargss):
     def decorator(fn):

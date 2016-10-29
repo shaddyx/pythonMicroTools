@@ -1,6 +1,6 @@
 import unittest
 
-from microtools.DI import Service, Locator
+from microtools.DI import Service, Locator, InjectClass
 
 
 @Service()
@@ -9,6 +9,13 @@ class Dependency1(object):
 @Service()
 class Dependency2(object):
     pass
+
+@InjectClass(dep2=Dependency2, dep1=Dependency1)
+@Service()
+class Dependency3(object):
+    def __init__(self):
+        print "constructor3 called"
+
 
 class FileToolsTest(unittest.TestCase):
 
@@ -21,6 +28,12 @@ class FileToolsTest(unittest.TestCase):
         dep1 = Locator.getInstance(Dependency1)
         dep1_n = Locator.getInstance(Dependency2)
         self.assertNotEqual(dep1, dep1_n)
+    def testInjectClass(self):
+        dep3 = Locator.getInstance(Dependency3)
+        self.assertTrue(isinstance(dep3.dep1, Dependency1))
+        self.assertTrue(isinstance(dep3.dep2, Dependency2))
+
+
 
 
 
