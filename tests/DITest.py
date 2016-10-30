@@ -1,6 +1,6 @@
 import unittest
 
-from microtools.DI import Service, Locator, InjectClass
+from microtools.DI import Service, ScopeContext, InjectClass
 
 
 @Service()
@@ -20,16 +20,20 @@ class Dependency3(object):
 class FileToolsTest(unittest.TestCase):
 
     def test_LocatorGetInstance(self):
-        dep1 = Locator.getInstance(Dependency1)
-        dep1_n = Locator.getInstance(Dependency1)
+        context = ScopeContext()
+        dep1 = context.getInstance(Dependency1)
+        dep1_n = context.getInstance(Dependency1)
         self.assertEqual(dep1, dep1_n)
 
     def test_LocatorGetInstance(self):
-        dep1 = Locator.getInstance(Dependency1)
-        dep1_n = Locator.getInstance(Dependency2)
+        context = ScopeContext()
+        dep1 = context.getInstance(Dependency1)
+        dep1_n = context.getInstance(Dependency2)
         self.assertNotEqual(dep1, dep1_n)
+
     def testInjectClass(self):
-        dep3 = Locator.getInstance(Dependency3)
+        context = ScopeContext()
+        dep3 = context.getInstance(Dependency3)
         self.assertTrue(isinstance(dep3.dep1, Dependency1))
         self.assertTrue(isinstance(dep3.dep2, Dependency2))
 

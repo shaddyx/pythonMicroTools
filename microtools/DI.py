@@ -1,94 +1,59 @@
+import copy
+import os
+import sys
 from threading import RLock
 
-class Scope(object):
+from microtools.di import DiTools
+
+_services={}  # type: dict[str, classobj]
+class ScopeContext(object):
     def __init__(self):
-        self.__objects={}
-        self.__instances={}
-        self.scopeLock=RLock()
+        self.__instances = {}
+        self.scopeLock = RLock()
+        self.services = {}
 
-    def __getName(self, obj):
-        if type(obj).__name__ == "str":
-            return obj
-        return obj.__name__.split(".")[-1]
+    def resolveClass(self, name):
+        pkg = DiTools.getObjectPackage(name)
+        if pkg not in _services:
+            raise Exception("Error, no class with name {pkg} registered, available:{keys}".format(pkg=pkg, keys=_services.keys()))
+        return _services[pkg]
 
-    def get(self, name):
-        self.scopeLock.acquire()
-        try:
-            name = self.__getName(name)
-            return self.__objects[name]
-        finally:
-            self.scopeLock.release()
-
-    def registerService(self, name, service):
-        name = self.__getName(name)
-        self.scopeLock.acquire()
-        try:
-            if name in self.__objects:
-                raise Exception("Error, service {name} already exists".format(name=name))
-            self.__objects[name] = service
-        finally:
-            self.scopeLock.release()
+    def makeInstance(self, cls):
+        instance = cls()
+        instance.contextScope = self
+        if hasattr(instance, "_inject"):
+            instance._inject()
+        return instance
 
     def getInstance(self, name):
-        name = self.__getName(name)
+        name = DiTools.getFullyQualifiedName(name)
         if name in self.__instances:
             return self.__instances[name]
         self.scopeLock.acquire()
-        if not name in self.__instances:
-            self.__instances[name] = self.__objects[name]()
+        cls = self.resolveClass(name)
+        if name not in self.__instances:
+            self.__instances[name] = self.makeInstance(cls)
+
         self.scopeLock.release()
         return self.__instances[name]
 
-
-
-    def registerInstance(self, name, instance):
-        name = self.__getName(name)
-        if name in self.__instances:
-            raise Exception("Error, instance for {name} already exists".format(name=name))
-        self.__instances[name] = instance
-
-
-
-class Locator(object):
-    scope=Scope()
     @staticmethod
-    def registerService(service):
-        Locator.scope.registerService(service, service)
+    def configure(params):
+        appContext = ScopeContext()
+        appContext._services = copy.copy(_services)
+        appContext.params = params
 
-    @staticmethod
-    def registerInstance(instance, name=None):
-        Locator.scope.registerInstance(name or instance.__class__, instance)
-
-    @staticmethod
-    def getInstance(service):
-        return Locator.scope.getInstance(service)
-
-def InjectClass(*args, **kwargs_):
+def InjectClass(**kwargs_):
     def decorator(cls):
-        #if not hasattr(cls, "__injector_classes_to_inject"):
-        #    cls.__injector_classes_to_inject = []
-        old = None
-        def injectedConstructor(*args, **kwargs):
+        def inject(self):
             for name in kwargs_:
-                setattr(args[0], name, Locator.getInstance(kwargs_[name]))
-            return old(*args, **kwargs)
-        old = cls.__init__
-        cls.__init__ = injectedConstructor
+                setattr(self, name, self.contextScope.getInstance(kwargs_[name]))
+        cls._inject =inject
         return cls
     return decorator
 
-def Inject(**kwargss):
-    def decorator(fn):
-        def wrapper(*args, **kwargs):
-            for arg in kwargss:
-                kwargs[arg] = Locator.getInstance(kwargss[arg])
-            return fn(*args, **kwargs)
-        return wrapper
-    return decorator
-
-
-def Service(*args, **kwargs):
+def Service():
     def decorator(cls):
-        Locator.registerService(cls)
+        _services[DiTools.getFullyQualifiedName(cls)] = cls
         return cls
     return decorator
