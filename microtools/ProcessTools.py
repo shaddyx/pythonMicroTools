@@ -11,7 +11,7 @@ class Process(object):
 
     def readLine(self):
         # type: () -> str
-        line = self.pipe.stdout.readline()
+        line = self.pipe.stdout.readline().decode(encoding='UTF-8')
         if line == '':
             return None
         return line
@@ -52,7 +52,7 @@ def execute(process, wait=True):
         res = ProcessResult()
         for line in pipe.stdout:
             res.stdout.append(
-                line.strip()
+                line.decode(encoding='UTF-8').strip()
             )
         return res
     else:

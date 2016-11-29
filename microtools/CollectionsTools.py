@@ -1,5 +1,8 @@
 import numbers
-
+import sys
+if sys.version_info >= (3, 0):
+    def xrange(*args, **kwargs):
+        return iter(range(*args, **kwargs))
 
 def getPath(*args):
     obj = args[0]
